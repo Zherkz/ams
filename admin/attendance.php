@@ -1,0 +1,9 @@
+<?php
+require_once __DIR__ . '/../config/auth.php';
+requireRole('admin');
+$pageTitle='Attendance';$base='/ams';
+$date=$_GET['date']??date('Y-m-d');$status=$_GET['status']??'';
+$sql='SELECT a.*,u.full_name,u.student_no,u.course,u.section FROM attendance a JOIN users u ON u.id=a.student_id WHERE a.attendance_date=?';$args=[$date];if(in_array($status,['Present','Late','Absent'],true)){ $sql.=' AND a.status=?';$args[]=$status;}$sql.=' ORDER BY a.time_in DESC, u.full_name';$stmt=db()->prepare($sql);$stmt->execute($args);$rows=$stmt->fetchAll();
+require __DIR__.'/../includes/header.php'; ?>
+<div class="panel"><div class="panel-head"><div><h2>Attendance records</h2><p>Review daily attendance across all students.</p></div><form class="filter-form"><input type="date" name="date" value="<?= e($date) ?>"><select name="status"><option value="">All statuses</option><option <?= $status==='Present'?'selected':'' ?>>Present</option><option <?= $status==='Late'?'selected':'' ?>>Late</option><option <?= $status==='Absent'?'selected':'' ?>>Absent</option></select><button class="btn btn-primary btn-sm">Filter</button></form></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Date</th><th>Time in</th><th>Time out</th><th>Status</th><th>Remarks</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><strong><?= e($r['full_name']) ?></strong><small class="table-sub"><?= e($r['student_no']) ?></small></td><td><?= e($r['attendance_date']) ?></td><td><?= e($r['time_in']?:'—') ?></td><td><?= e($r['time_out']?:'—') ?></td><td><span class="badge <?= strtolower($r['status']) ?>"><?= e($r['status']) ?></span></td><td><?= e($r['remarks']?:'—') ?></td></tr><?php endforeach; if(!$rows): ?><tr><td colspan="6" class="empty">No records found.</td></tr><?php endif; ?></tbody></table></div></div>
+<?php require __DIR__.'/../includes/footer.php'; ?>
